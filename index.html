@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xotira O‘yini</title>
+    <link rel="shortcut icon" type="image/png" href="fevicon.PNG"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Biryani:wght@800&display=swap');
+        * { font-family: 'Biryani', sans-serif; box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+        body {
+            background: linear-gradient(to bottom, #4481eb 0%, #04bedd 100%);
+        }
+        table { margin-top: 60px; }
+        td { height: 70px; width: 70px; border-radius: 4px; }
+        #ol {
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+            z-index: 2; display: flex;
+            justify-content: center; align-items: center;
+            padding: 10px;
+        }
+        #inst {
+            width: 90%; max-width: 400px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px; padding: 15px;
+            color: white; text-align: center;
+        }
+        #title {
+            position: relative;
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(15px);
+            border-radius: 10px;
+            color: white; padding: 8px;
+            margin: 8px auto; width: calc(100% - 16px);
+            text-align: center;
+        }
+        #moves, #time {
+            position: absolute; top: 8px; font-size: 16px;
+        }
+        #moves { left: 15px; }
+        #time { right: 15px; }
+        button {
+            background: rgba(255,255,255,0.2);
+            color: white; border: 0.1px solid #fff;
+            border-radius: 8px; padding: 8px 12px;
+            font-size: 16px; margin: 5px;
+        }
+        .inner {
+            position: relative; width: 100%; height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+        }
+        .front, .back {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 28px;
+        }
+        .front { background: rgba(255,255,255,0.3); }
+        .back { background: rgba(255,255,255,0.5); transform: rotateY(180deg); }
+        @media (max-width: 600px) {
+            td { height: 50px; width: 50px; }
+            .front, .back { font-size: 20px; }
+            #inst { font-size: 14px; }
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+</head>
+<body>
+    <div id="ol"></div>
+    <div id="title">
+        <span id="logo">Xotira O‘yini</span>
+    </div>
+    <div id="title" style="height: 40px;">
+        <span id="moves"></span>
+        <span id="time"></span>
+    </div>
+    <center><table cellspacing="0"></table></center>
+
+    <script>
+        var em = ["💐","🌹","🌻","🏵️","🌺","🌴","🌈","🍓","🍒","🍎","🍉","🍊","🥭","🍍","🍋","🍏","🍐","🥝","🍇","🥥","🍅","🌶️","🍄","🧅","🥦","🥑","🍔","🍕","🧁","🎂","🍬","🍩","🍫","🎈"];
+        var tmp, c, p = em.length;
+        if(p) while(--p) { c = Math.floor(Math.random() * (p + 1)); tmp = em[c]; em[c] = em[p]; em[p] = tmp; }
+        var pre="", pID, ppID=0, turn=0, t="transform", flip="rotateY(180deg)", flipBack="rotateY(0deg)", time, mode;
+
+        window.onload = function() {
+            $("#ol").html(`
+                <div id="inst">
+                    <h3>Salom!</h3>
+                    <p>O‘yin qoidalari:</p>
+                    <ul style="text-align:left;">
+                        <li>Bir xil rasmli kartalarni juftlab oching.</li>
+                        <li>Ularni ochish uchun ustiga bosing.</li>
+                        <li>Agar mos kelmasa, yana yopiladi.</li>
+                    </ul>
+                    <p>O‘yin maydonini tanlang:</p>
+                    <button onclick="start(3, 4)">3 × 4</button>
+                    <button onclick="start(4, 4)">4 × 4</button>
+                    <button onclick="start(4, 5)">4 × 5</button>
+                    <button onclick="start(5, 6)">5 × 6</button>
+                    <button onclick="start(6, 6)">6 × 6</button>
+                </div>
+            `);
+        }
+
+        function start(r,l) {
+            min=0, sec=0, moves=0;
+            $("#time").html("Vaqt: 00:00");
+            $("#moves").html("Harakatlar: 0");
+            time = setInterval(function() {
+                sec++;
+                if(sec==60) { min++; sec=0; }
+                let sSec = sec < 10 ? "0"+sec : sec;
+                $("#time").html(`Vaqt: 0${min}:${sSec}`);
+            }, 1000);
+
+            rem=r*l/2, noItems=rem;
+            mode = r+"×"+l;
+            var items = [];
+            for (var i=0;i<noItems;i++) items.push(em[i], em[i]);
+            var p = items.length;
+            while(--p) { c = Math.floor(Math.random() * (p + 1)); tmp = items[c]; items[c] = items[p]; items[p] = tmp; }
+
+            $("table").html("");
+            var n=1;
+            for (var i = 1;i<=r;i++) {
+                $("table").append("<tr>");
+                for (var j = 1;j<=l;j++) {
+                    $("table").append(`<td id='${n}' onclick="change(${n})"><div class='inner'><div class='front'></div><div class='back'><p>${items[n-1]}</p></div></div></td>`);
+                    n++;
+                }
+                $("table").append("</tr>");
+            }
+            $("#ol").fadeOut(500);
+        }
+
+        function change(x) {
+            let i = "#"+x+" .inner";
+            let b = "#"+x+" .inner .back";
+            if (turn==2 || $(i).attr("flip")=="block" || ppID==x) return;
+            $(i).css(t, flip);
+            if (turn==1) {
+                turn=2;
+                if (pre!=$(b).text()) {
+                    setTimeout(function() {
+                        $(pID).css(t, flipBack);
+                        $(i).css(t, flipBack);
+                        ppID=0;
+                    },1000);
+                } else {
+                    rem--;
+                    $(i).attr("flip", "block");
+                    $(pID).attr("flip", "block");
+                }
+                setTimeout(function() {
+                    turn=0;
+                    moves++;
+                    $("#moves").html("Harakatlar: "+moves);
+                },1150);
+            } else {
+                pre = $(b).text();
+                ppID = x;
+                pID = "#"+x+" .inner";
+                turn=1;
+            }
+            if (rem==0) {
+                clearInterval(time);
+                let finishTime = (min==0) ? `${sec} soniya` : `${min} daqiqa va ${sec} soniya`;
+                setTimeout(function() {
+                    $("#ol").html(`
+                        <div id="inst">
+                            <h2>Tabriklaymiz! 🎉</h2>
+                            <p>Siz ${mode} maydonida ${moves} harakat bilan o‘yinni tugatdingiz.</p>
+                            <p>Vaqtingiz: ${finishTime}</p>
+                            <p>Yana o‘ynaysizmi?</p>
+                            <button onclick="start(3, 4)">3 × 4</button>
+                            <button onclick="start(4, 4)">4 × 4</button>
+                            <button onclick="start(4, 5)">4 × 5</button>
+                            <button onclick="start(5, 6)">5 × 6</button>
+                            <button onclick="start(6, 6)">6 × 6</button>
+                        </div>
+                    `);
+                    $("#ol").fadeIn(750);
+                }, 1500);
+            }
+        }
+    </script>
+</body>
+</html>
