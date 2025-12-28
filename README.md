@@ -1,2 +1,2 @@
-# Xotira-_oyini
-xotia  oyini  kodi
+# Xotira-o'yini
+xotira  oyini  kodi
